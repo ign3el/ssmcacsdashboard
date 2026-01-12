@@ -22,13 +22,11 @@ const Sidebar = ({ currentView, onNavigate }) => {
         >
 
             {/* 
-         GLASS LAYER 
-         - Backdrop Blur: 3xl for deep frost
-         - Background: Semi-transparent dark blue
-         - Border: gradient border effect
+         GLASS LAYER:
+         - Shadow is DISABLED when collapsed to prevent bleeding (Fix for "Leftover Image")
       */}
-            <div className={`absolute inset-0 bg-[#0f172a]/60 backdrop-blur-3xl border-r border-white/10 shadow-[15px_0_30px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-700
-        ${isHovered ? 'rounded-r-2xl' : ''}`}>
+            <div className={`absolute inset-0 bg-[#0f172a]/60 backdrop-blur-3xl border-r border-white/10 overflow-hidden transition-all duration-700
+        ${isHovered ? 'rounded-r-2xl shadow-[15px_0_30px_rgba(0,0,0,0.3)]' : 'shadow-none'}`}>
 
                 {/* TOP REFLECTION (Light Source) */}
                 <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-transparent pointer-events-none"></div>
@@ -93,7 +91,7 @@ const Sidebar = ({ currentView, onNavigate }) => {
                                 )}
 
                                 {/* HOVER GLOW */}
-                                <div className="absolute inset-0 bg-white/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div className="absolute inset-0 bg-white/5 rounded-xl opacity-0 hover:bg-white/10 group-hover:opacity-100 transition-all"></div>
 
                                 <Icon size={22} className={`shrink-0 relative z-10 transition-transform duration-300 drop-shadow-lg ${isActive ? 'text-cyan-300 scale-110' : 'group-hover:text-blue-200 group-hover:scale-105'}`} />
 
