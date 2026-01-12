@@ -1,0 +1,21 @@
+services:
+  backend:
+    build: ./server
+    container_name: acs-backend
+    ports:
+      - "3000:3000"
+    restart: always
+
+  frontend:
+    build: ./client
+    container_name: acs-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: always
+
+# Define network to ensure visibility
+networks:
+  default:
+    driver: bridge
