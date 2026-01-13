@@ -10,6 +10,7 @@ services:
       - MSSQL_SA_PASSWORD=SSMC_Admin_2024!
     volumes:
       - ./sql_backup:/var/opt/mssql/backup
+      - ./sql_data:/var/opt/mssql/data
 
   backend:
     container_name: acs-backend

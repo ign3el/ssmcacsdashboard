@@ -6,6 +6,9 @@ import StatsCards from './components/StatsCards';
 import TransitTable from './components/TransitTable';
 import ReportGenerator from './components/ReportGenerator';
 import CardholderPage from './components/CardholderPage';
+import SettingsPage from './components/SettingsPage';
+
+import LoginPage from './components/LoginPage';
 
 // Custom Hook for Polling
 function useInterval(callback, delay) {
@@ -27,15 +30,39 @@ function useInterval(callback, delay) {
 }
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState('');
   const [currentView, setCurrentView] = useState('dashboard');
   const [data, setData] = useState([]);
   const [employeeData, setEmployeeData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [connectionError, setConnectionError] = useState(false);
 
   // Date Range State
   const [dateRange, setDateRange] = useState('24h');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+
+  // Check for persisted session
+  useEffect(() => {
+    const storedUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        setCurrentUser(user.username);
+        setIsLoggedIn(true);
+      } catch (e) {
+        console.error('Failed to parse stored session');
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('currentUser');
+    setIsLoggedIn(false);
+    setCurrentUser('');
+  };
 
   // --- SERVER-SIDE FETCHING & FILTERING ---
   const fetchData = async () => {
@@ -54,21 +81,36 @@ function App() {
       else if (dateRange === '7days') params.append('start', subDays(now, 7).toISOString());
       else if (dateRange === '30days') params.append('start', subDays(now, 30).toISOString());
       else if (dateRange === 'custom' && customStart && customEnd) {
-        // Only send if both are set
-        params.append('start', new Date(customStart).toISOString());
-        params.append('end', new Date(customEnd).toISOString());
+        const startDate = new Date(customStart);
+        const endDate = new Date(customEnd);
+
+        // Only send if both are set and valid dates
+        if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+          params.append('start', startDate.toISOString());
+          params.append('end', endDate.toISOString());
+        } else {
+          console.warn('Invalid custom date range provided:', customStart, customEnd);
+          // Optionally, you could prevent the fetch or set a default range here
+        }
       }
 
       const response = await fetch(`/api/transit?${params.toString()}`);
       const result = await response.json();
-      setData(result);
+      // Ensure result is always an array
+      setData(Array.isArray(result) ? result : []);
 
       // Fetch Employees for Stats
       const empResponse = await fetch('/api/employees');
       const empResult = await empResponse.json();
-      setEmployeeData(empResult);
+      setEmployeeData(Array.isArray(empResult) ? empResult : []);
+      setEmployeeData(Array.isArray(empResult) ? empResult : []);
+      setConnectionError(false); // Clear error on success
     } catch (error) {
       console.error('Error fetching data:', error);
+      setData([]);
+      setEmployeeData([]);
+      // Only set error if it's a real fetch failure (likely DB down)
+      setConnectionError(true);
     }
   };
 
@@ -106,6 +148,16 @@ function App() {
     setCurrentView(viewId);
   };
 
+  const handleLogin = (username) => {
+    setCurrentUser(username);
+    setIsLoggedIn(true);
+    fetchData(); // Fetch data immediately on login
+  };
+
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
   return (
     <div className="flex h-screen bg-[#020b1c] text-slate-300 font-sans overflow-hidden selection:bg-blue-500/30">
 
@@ -116,14 +168,19 @@ function App() {
         <div className="absolute top-[20%] right-[20%] w-[20%] h-[20%] bg-indigo-600/5 rounded-full blur-[100px]"></div>
       </div>
 
-      <Sidebar currentView={currentView} onNavigate={handleNavigate} />
+      <Sidebar currentView={currentView} onNavigate={handleNavigate} user={currentUser} onLogout={handleLogout} />
 
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* HEADER */}
-        <header className="h-16 px-8 flex items-center justify-between border-b border-white/5 bg-[#020b1c]/80 backdrop-blur-xl">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-              {currentView === 'dashboard' ? 'Overview' : currentView === 'reports' ? 'Reports & Analytics' : 'Settings'}
+        <header className="h-20 px-8 flex items-center justify-between border-b border-white/5 bg-[#020b1c]/80 backdrop-blur-xl">
+          <div className="flex items-center gap-6">
+            <img src="/logo-header.png" alt="SSMC" className="h-12 object-contain" />
+            <div className="h-8 w-[1px] bg-white/10"></div>
+            <h2 className="text-xl font-bold text-white tracking-wide">
+              {currentView === 'dashboard' ? 'Security Dashboard' :
+                currentView === 'reports' ? 'Report Generator' :
+                  currentView === 'cardholders' ? 'Cardholder Management' :
+                    'System Settings'}
             </h2>
           </div>
 
@@ -138,11 +195,11 @@ function App() {
               </button>
               <div className="flex items-center gap-3 pl-4 border-l border-white/10">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs ring-2 ring-white/10">
-                  AD
+                  {currentUser ? currentUser.substring(0, 2).toUpperCase() : 'DB'}
                 </div>
                 <div className="hidden lg:block">
-                  <p className="text-sm font-medium text-white">Admin User</p>
-                  <p className="text-xs text-slate-500">Super Admin</p>
+                  <p className="text-sm font-medium text-white">{currentUser}</p>
+                  <p className="text-xs text-slate-500">Database User</p>
                 </div>
               </div>
             </div>
@@ -151,6 +208,29 @@ function App() {
 
         {/* CONTENT AREA */}
         <main className="flex-1 overflow-y-auto p-8 custom-scrollbar relative">
+
+          {/* GLOBAL ERROR BANNER */}
+          {connectionError && currentView !== 'settings' && (
+            <div className="max-w-7xl mx-auto mb-8 animate-fade-in">
+              <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-rose-500/20 rounded-full text-rose-400">
+                    <LogOut size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold">Database Connection Failed</h3>
+                    <p className="text-rose-200 text-sm">Unable to connect to the SQL Server. Please check your configuration.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setCurrentView('settings')}
+                  className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-rose-500/20"
+                >
+                  Go to Settings
+                </button>
+              </div>
+            </div>
+          )}
 
           {currentView === 'dashboard' && (
             <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
@@ -289,6 +369,12 @@ function App() {
           {currentView === 'cardholders' && (
             <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
               <CardholderPage />
+            </div>
+          )}
+
+          {currentView === 'settings' && (
+            <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
+              <SettingsPage />
             </div>
           )}
 

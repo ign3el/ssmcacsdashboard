@@ -1,0 +1,10 @@
+{
+  "appPort": 80,
+  "user": "acs_reader",
+  "password": "SSMC_Admin_2024!",
+  "server": "172.30.178.197",
+  "database": "cms",
+  "port": 1433,
+  "encrypt": false,
+  "trustServerCertificate": true
+}

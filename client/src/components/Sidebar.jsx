@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LayoutDashboard, FileText, Users, MapPin, ShieldAlert, Settings, LogOut, ChevronRight, Zap, Pin, PinOff } from 'lucide-react';
 
-const Sidebar = ({ currentView, onNavigate }) => {
+const Sidebar = ({ currentView, onNavigate, user, onLogout }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isPinned, setIsPinned] = useState(false);
 
@@ -12,8 +12,6 @@ const Sidebar = ({ currentView, onNavigate }) => {
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'reports', label: 'Reports', icon: FileText },
         { id: 'cardholders', label: 'Cardholders', icon: Users },
-        { id: 'access-points', label: 'Access Points', icon: MapPin },
-        { id: 'locations', label: 'Locations', icon: ShieldAlert },
         { id: 'settings', label: 'Settings', icon: Settings },
     ];
 
@@ -60,15 +58,22 @@ const Sidebar = ({ currentView, onNavigate }) => {
                 <div className="h-28 flex items-center justify-between px-6 relative">
                     <div className="absolute inset-x-8 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 
-                    <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.5)] mr-4 shrink-0 ring-1 ring-white/20">
-                            <ShieldAlert className="text-white drop-shadow-md" size={20} />
-                        </div>
-                        <div className="overflow-hidden">
-                            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200 tracking-tight">SSMC</h1>
-                            <p className="text-[9px] text-cyan-400 font-bold tracking-[0.2em] uppercase">Secure</p>
-                        </div>
+                    <div className="flex items-center justify-center w-full">
+                        <img
+                            src="/logo-sidebar.png"
+                            alt="SSMC Logo"
+                            className={`transition-all duration-300 ${isOpen ? 'h-12 opacity-100' : 'h-8 opacity-0'}`}
+                        />
                     </div>
+
+                    {/* LOGOUT BUTTON (Top) */}
+                    <button
+                        onClick={onLogout}
+                        className="p-2 ml-2 rounded-full transition-all duration-300 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
+                        title="Logout"
+                    >
+                        <LogOut size={16} />
+                    </button>
 
                     {/* PIN BUTTON */}
                     <button
@@ -79,7 +84,7 @@ const Sidebar = ({ currentView, onNavigate }) => {
                                 : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
                         title={isPinned ? "Unpin Sidebar" : "Pin Sidebar Open"}
                     >
-                        {isPinned ? <Pin size={16} className="fill-current" /> : <PinOff size={16} />}
+                        <Pin size={16} className={isPinned ? "fill-current" : ""} />
                     </button>
                 </div>
 
@@ -118,7 +123,7 @@ const Sidebar = ({ currentView, onNavigate }) => {
                         <div className="flex items-center gap-3 relative z-10">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500 shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
                             <div>
-                                <p className="text-xs font-bold text-white">Service User</p>
+                                <p className="text-xs font-bold text-white max-w-[120px] truncate" title={user}>{user || 'Guest'}</p>
                                 <p className="text-[10px] text-emerald-400 tracking-wider">● ONLINE</p>
                             </div>
                         </div>
@@ -126,6 +131,7 @@ const Sidebar = ({ currentView, onNavigate }) => {
                 </div>
             </div>
         </div>
+
     );
 };
 

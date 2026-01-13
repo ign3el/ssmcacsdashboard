@@ -9,9 +9,6 @@ const StatsCards = ({ data, employeeData = [] }) => {
 
     const cards = [
         { title: 'Total Entries', value: totalEntries, icon: Activity, color: 'text-accent' },
-        { title: 'Security Alerts', value: deniedCount, icon: ShieldAlert, color: 'text-danger' },
-        { title: 'Registered Employees', value: employeeCount, icon: User, color: 'text-warning' },
-        { title: 'Last Activity', value: lastActive, icon: ShieldCheck, color: 'text-success' },
     ];
 
     return (

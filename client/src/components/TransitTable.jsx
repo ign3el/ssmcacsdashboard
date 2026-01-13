@@ -57,8 +57,7 @@ const TransitTable = ({ data }) => {
                                     { label: 'Cardholder', key: 'CardholderName' },
                                     { label: 'Card #', key: 'CardNumber' },
                                     { label: 'Door', key: 'DoorName' },
-                                    { label: 'Location', key: 'Location' },
-                                    { label: 'Dept', key: 'Department' },
+                                    { label: 'Location', key: 'DoorDescription' },
                                     { label: 'Event', key: 'EventType' },
                                     { label: 'Status', key: 'AccessGranted' }
                                 ].map((col) => (
@@ -79,21 +78,26 @@ const TransitTable = ({ data }) => {
                             {currentData.map((row, index) => (
                                 <tr key={index} className="table-row-hover group transition-all duration-200">
                                     <td className="px-6 py-4 text-sm text-slate-300 font-mono whitespace-nowrap first:pl-8">
-                                        {format(new Date(row.EventTime), 'HH:mm:ss')}
-                                        <span className="text-slate-500 ml-2 text-xs">{format(new Date(row.EventTime), 'MMM dd')}</span>
+                                        {row.EventTime ? (
+                                            <>
+                                                {format(new Date(row.EventTime), 'HH:mm:ss')}
+                                                <span className="text-slate-500 ml-2 text-xs">{format(new Date(row.EventTime), 'MMM dd')}</span>
+                                            </>
+                                        ) : (
+                                            <span className="text-slate-500">N/A</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-slate-700/50 flex items-center justify-center text-xs font-bold text-slate-300 ring-1 ring-white/10 group-hover:ring-blue-400/50 transition-all">
-                                                {row.CardholderName.charAt(0)}
+                                                {row.CardholderName ? row.CardholderName.charAt(0) : '?'}
                                             </div>
-                                            <span className="font-medium text-slate-200 group-hover:text-white transition-colors">{row.CardholderName}</span>
+                                            <span className="font-medium text-slate-200 group-hover:text-white transition-colors">{row.CardholderName || 'Unknown'}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm font-mono text-slate-400">{row.CardNumber}</td>
                                     <td className="px-6 py-4 text-sm text-slate-300">{row.DoorName}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-400">{row.Location}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-400">{row.Department}</td>
+                                    <td className="px-6 py-4 text-sm text-slate-400">{row.DoorDescription || row.DoorName}</td>
                                     <td className="px-6 py-4 text-sm text-slate-300">{row.EventType}</td>
                                     <td className="px-6 py-4 last:pr-8">
                                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border

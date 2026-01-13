@@ -6,6 +6,9 @@ node_modules/
 build/
 dist/
 sql_backup/
+sql_data/
+dist_exe/
+
 
 # Environment Variables
 .env

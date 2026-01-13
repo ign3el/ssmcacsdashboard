@@ -1,10 +1,209 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const db = require('./db');
+const auth = require('./auth');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Debugging
+console.log('Initializing Routes...');
+
+// API: Settings (Moved to top for priority)
+app.get('/api/settings', (req, res) => {
+    console.log('GET /api/settings hit');
+    try {
+        const config = db.getCurrentConfig();
+        res.json(config);
+    } catch (err) {
+        console.error('Error in GET /api/settings:', err);
+        res.status(500).json({ error: 'Failed to retrieve settings' });
+    }
+});
+
+// API: Test Connection (Check credentials without saving)
+app.post('/api/test-connection', async (req, res) => {
+    console.log('POST /api/test-connection hit');
+    try {
+        const testConfig = req.body;
+        // Basic validation
+        if (!testConfig.server || !testConfig.user || !testConfig.database) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        await db.testConnection(testConfig);
+        res.json({ message: 'Connection successful!' });
+    } catch (err) {
+        console.error('Test Connection Failed:', err.message);
+        res.status(500).json({ error: `Connection failed: ${err.message}` });
+    }
+});
+
+// API: Deploy Database Views (Production Setup)
+app.post('/api/deploy-views', async (req, res) => {
+    console.log('POST /api/deploy-views hit');
+    try {
+        const logs = await db.deployViews();
+        res.json({ logs });
+    } catch (err) {
+        console.error('Deployment Failed:', err.message);
+        res.status(500).json({ error: 'Deployment process crashed.', logs: [err.message] });
+    }
+});
+
+app.post('/api/settings', async (req, res) => {
+    console.log('POST /api/settings hit');
+    try {
+        const newConfig = req.body;
+        if (!newConfig.server || !newConfig.user || !newConfig.database) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        await db.saveConfig(newConfig);
+        res.json({ message: 'Configuration saved and connection tested successfully!' });
+    } catch (err) {
+        console.error('Settings Update Failed:', err.message);
+        res.status(500).json({ error: `Connection failed: ${err.message}` });
+    }
+});
+
+// --- AUTHENTICATION ROUTES ---
+
+// Login
+app.post('/api/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await auth.authenticate(username, password);
+        if (user) {
+            res.json({ success: true, user });
+        } else {
+            res.status(401).json({ error: 'Invalid credentials' });
+        }
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Deploy Views (Checks for Administrator DB User)
+app.post('/api/deploy-views', async (req, res) => {
+    try {
+        const currentConfig = db.getCurrentConfig();
+        if (currentConfig.user !== 'Administrator') {
+            return res.status(403).json({
+                error: 'Unauthorized: View deployment requires "Administrator" database user.'
+            });
+        }
+
+        const logs = await db.deployViews();
+        res.json({ success: true, logs });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// List Users
+app.get('/api/users', async (req, res) => {
+    try {
+        const users = auth.listUsers();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create User
+app.post('/api/users', async (req, res) => {
+    try {
+        const { username, password, role } = req.body;
+        const newUser = await auth.createUser(username, password, role);
+        res.json(newUser);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Reset User Password (Admin function)
+app.put('/api/users/:username/reset-password', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const { password } = req.body;
+        if (!password) return res.status(400).json({ error: 'Password is required' });
+
+        await auth.resetPassword(username, password);
+        res.json({ success: true, message: 'Password updated successfully' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Delete User
+app.delete('/api/users/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        await auth.deleteUser(username);
+        res.json({ success: true, message: 'User deleted' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Reset Password (Admin Recovery via MSSQL)
+app.post('/api/auth/recovery', async (req, res) => {
+    try {
+        const { mssqlPassword, newAdminPassword } = req.body;
+
+        // 1. Verify MSSQL "Administrator" Credentials
+        // We use the same server/database from current config, but force user='Administrator'
+        const currentConfig = db.getCurrentConfig();
+        const recoveryConfig = {
+            ...currentConfig,
+            user: 'Administrator',
+            password: mssqlPassword
+        };
+
+        try {
+            await db.testConnection(recoveryConfig);
+        } catch (dbErr) {
+            console.error('Recovery failed:', dbErr);
+            return res.status(401).json({ error: 'Invalid MSSQL Administrator password' });
+        }
+
+        // 2. Reset App Admin Password
+        await auth.resetPassword('admin', newAdminPassword);
+        res.json({ success: true, message: 'Admin password reset successfully' });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Reset Password (Internal User Management)
+app.post('/api/users/reset', async (req, res) => {
+    try {
+        const { username, newPassword } = req.body;
+        await auth.resetPassword(username, newPassword);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Delete User
+app.delete('/api/users/:username', (req, res) => {
+    try {
+        const { username } = req.params;
+        const success = auth.deleteUser(username);
+        if (success) res.json({ success: true });
+        else res.status(404).json({ error: 'User not found' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Helper to format date for SQL
 const formatDate = (d) => new Date(d).toISOString();
@@ -22,10 +221,11 @@ app.get('/api/transit', async (req, res) => {
                 EventTime,
                 CardholderName,
                 DoorName,
+                DoorDescription,
                 Location,
-                Department,
                 CardNumber,
-                EventType
+                EventType,
+                AccessGranted
             FROM v_TransitLog WITH (NOLOCK)
             WHERE 1=1
         `;
@@ -49,8 +249,9 @@ app.get('/api/transit', async (req, res) => {
                 AND (
                     CardholderName LIKE @search OR
                     DoorName LIKE @search OR
-                    Department LIKE @search OR
-                    CardNumber LIKE @search
+                    DoorDescription LIKE @search OR
+                    CardNumber LIKE @search OR
+                    EventType LIKE @search
                 )
             `;
             params.search = `%${search}%`;
@@ -126,7 +327,93 @@ app.get('/api/behaviors/:behaviorId/doors', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Connected to SQL Database`);
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// --- SELF-CONTAINED SETUP WIZARD ---
+const fs = require('fs');
+const readline = require('readline');
+
+const CONFIG_PATH = path.join(process.cwd(), 'config.json');
+
+async function prompt(question) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    return new Promise(resolve => {
+        rl.question(question, (answer) => {
+            rl.close();
+            resolve(answer.trim());
+        });
+    });
+}
+
+async function runSetupWizard() {
+    console.log('\n===================================================');
+    console.log('      SSMC ACS DASHBOARD - FIRST RUN SETUP');
+    console.log('===================================================');
+    console.log('[!] Configuration file not found. Let\'s create it.\n');
+
+    const appPort = await prompt('Enter Dashboard Port (default 3000, use 80 for no-port URL): ') || '3000';
+    const server = await prompt('Enter SQL Server IP: ');
+    const dbPort = await prompt('Enter SQL Server Port (default 1433): ') || '1433';
+    const user = await prompt('Enter SQL User: ');
+    const password = await prompt('Enter SQL Password: ');
+    const database = await prompt('Enter Database Name (default cms): ') || 'cms';
+
+    const newConfig = {
+        appPort: parseInt(appPort),
+        user,
+        password,
+        server,
+        database,
+        port: parseInt(dbPort),
+        encrypt: false,
+        trustServerCertificate: true
+    };
+
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(newConfig, null, 2));
+    console.log('\n[OK] Configuration saved to config.json!\n');
+    return newConfig;
+}
+
+async function main() {
+    let config;
+    if (fs.existsSync(CONFIG_PATH)) {
+        config = db.getCurrentConfig();
+    } else {
+        config = await runSetupWizard();
+        // Force reload in db module if needed, or just let connectDB handle it
+    }
+
+    const PORT = process.env.PORT || config.appPort || 3000;
+
+    const serverInstance = app.listen(PORT, '0.0.0.0', () => {
+        console.log(`\n🚀 SSMC ACS Dashboard Backend running on port ${PORT}`);
+        console.log(`📂 Serving static files from: ${path.join(__dirname, 'public')}`);
+        console.log('---------------------------------------------------');
+        console.log(`Open http://localhost:${PORT} or http://${require('os').hostname()}:${PORT}`);
+        console.log('---------------------------------------------------');
+        console.log(`Connected to SQL Database`);
+        console.log('Routes Verified.');
+    });
+
+    serverInstance.on('error', (e) => {
+        if (e.code === 'EADDRINUSE') {
+            console.error('\n[FATAL ERROR] Port ' + PORT + ' is already in use!');
+            console.error('---------------------------------------------------');
+            console.error('>> SOLUTION 1: Edit "config.json" and change "appPort" to a different number (e.g. 3000, 8080).');
+            console.error('>> SOLUTION 2: Delete "config.json" and restart the EXE to run the setup wizard again.');
+            console.error('---------------------------------------------------');
+            process.exit(1);
+        } else {
+            console.error(e);
+        }
+    });
+}
+
+main();
