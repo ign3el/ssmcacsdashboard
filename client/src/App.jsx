@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import StatsCards from './components/StatsCards';
 import TransitTable from './components/TransitTable';
 import ReportGenerator from './components/ReportGenerator';
+import CardholderPage from './components/CardholderPage';
 
 // Custom Hook for Polling
 function useInterval(callback, delay) {
@@ -28,6 +29,7 @@ function useInterval(callback, delay) {
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [data, setData] = useState([]);
+  const [employeeData, setEmployeeData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Date Range State
@@ -57,9 +59,14 @@ function App() {
         params.append('end', new Date(customEnd).toISOString());
       }
 
-      const response = await fetch(`http://localhost:3000/api/transit?${params.toString()}`);
+      const response = await fetch(`/api/transit?${params.toString()}`);
       const result = await response.json();
       setData(result);
+
+      // Fetch Employees for Stats
+      const empResponse = await fetch('/api/employees');
+      const empResult = await empResponse.json();
+      setEmployeeData(empResult);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -68,15 +75,32 @@ function App() {
   // Initial Load & Filter Changes -> Trigger Fetch
   useEffect(() => {
     fetchData();
-  }, [searchTerm, dateRange, customStart, customEnd]); // Re-fetch when ANY filter changes
+  }, [searchTerm, dateRange]); // Re-fetch when search or range type changes (Custom requires manual Apply)
 
   // Polling (Keep "Live") - Re-fetches with active filters every 2s
   useInterval(() => {
-    fetchData();
+    if (dateRange !== 'custom') {
+      fetchData();
+    }
   }, 2000);
 
-  // Data is now pre-filtered by Server, so no local filter logic needed
-  const filteredData = data;
+  // Apply additional client-side filtering for Event and Status
+  const filteredData = data.filter(item => {
+    if (!searchTerm) return true;
+
+    const search = searchTerm.toLowerCase();
+    const eventType = (item.EventType || '').toLowerCase();
+    const status = item.AccessGranted ? 'granted' : 'denied';
+    const cardholderName = (item.CardholderName || '').toLowerCase();
+    const doorName = (item.DoorName || '').toLowerCase();
+    const location = (item.Location || '').toLowerCase();
+
+    return eventType.includes(search) ||
+      status.includes(search) ||
+      cardholderName.includes(search) ||
+      doorName.includes(search) ||
+      location.includes(search);
+  });
 
   const handleNavigate = (viewId) => {
     setCurrentView(viewId);
@@ -104,19 +128,6 @@ function App() {
           </div>
 
           <div className="flex items-center gap-6">
-            {/* Global Search Bar */}
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={16} className="text-slate-500 group-focus-within:text-blue-400 transition-colors" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search events, names, doors..."
-                className="bg-[#0f172a]/50 border border-white/5 rounded-xl pl-10 pr-4 py-2 text-sm w-64 focus:w-80 transition-all outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
 
             <div className="h-8 w-[1px] bg-white/10"></div>
 
@@ -193,7 +204,18 @@ function App() {
                     </div>
                     <div className="h-8 w-[1px] bg-white/10"></div>
                     <div className="flex flex-col">
-                      <label className="text-[10px] uppercase font-bold text-slate-500 mb-1">To</label>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[10px] uppercase font-bold text-slate-500">To</label>
+                        <button
+                          onClick={() => {
+                            const now = new Date();
+                            setCustomEnd(format(now, "yyyy-MM-dd'T'HH:mm"));
+                          }}
+                          className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded hover:bg-blue-500/30 transition-colors"
+                        >
+                          NOW
+                        </button>
+                      </div>
                       <input
                         type="datetime-local"
                         className="bg-[#0f172a]/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-300 outline-none focus:border-blue-500/50"
@@ -201,24 +223,35 @@ function App() {
                         onChange={(e) => setCustomEnd(e.target.value)}
                       />
                     </div>
+                    <div className="h-8 w-[1px] bg-white/10"></div>
+                    <button
+                      onClick={() => fetchData()}
+                      className="h-full px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2"
+                    >
+                      APPLY
+                    </button>
                   </div>
                 </div>
               )}
 
               {/* STATS CARDS */}
-              <StatsCards data={filteredData} />
+              <StatsCards data={filteredData} employeeData={employeeData} />
 
               {/* MAIN TABLE */}
               <div className="glass-panel rounded-2xl border border-white/5 overflow-hidden flex flex-col h-[600px]">
                 <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
                   <h3 className="font-semibold text-lg text-white">Live Access Logs</h3>
-                  <div className="flex gap-2">
-                    <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
-                      <Filter size={18} />
-                    </button>
-                    <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
-                      <Settings size={18} />
-                    </button>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search size={16} className="text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search events, names, doors, status..."
+                      className="bg-[#0f172a]/50 border border-white/5 rounded-xl pl-10 pr-4 py-2 text-sm w-64 focus:w-80 transition-all outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="flex-1 overflow-hidden">
@@ -230,12 +263,32 @@ function App() {
 
           {currentView === 'reports' && (
             <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-1">Report Generator</h1>
-                <p className="text-slate-500">Create, customize, and export detailed access reports.</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-3xl font-bold text-white mb-1">Report Generator</h1>
+                  <p className="text-slate-500">Create, customize, and export detailed access reports.</p>
+                </div>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search size={16} className="text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search events, names, doors, status..."
+                    className="bg-[#0f172a]/50 border border-white/5 rounded-xl pl-10 pr-4 py-2 text-sm w-64 focus:w-80 transition-all outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
               </div>
               {/* Pass the SERVER-FILTERED data to the report generator */}
               <ReportGenerator data={filteredData} />
+            </div>
+          )}
+
+          {currentView === 'cardholders' && (
+            <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
+              <CardholderPage />
             </div>
           )}
 

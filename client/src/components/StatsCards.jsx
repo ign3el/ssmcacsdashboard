@@ -1,16 +1,16 @@
 import React from 'react';
-import { ShieldCheck, ShieldAlert, Activity, MapPin } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Activity, User } from 'lucide-react';
 
-const StatsCards = ({ data }) => {
+const StatsCards = ({ data, employeeData = [] }) => {
     const totalEntries = data.length;
     const deniedCount = data.filter(d => !d.AccessGranted).length;
-    const uniqueLocations = new Set(data.map(d => d.Location)).size;
+    const employeeCount = employeeData.length;
     const lastActive = data[0] ? new Date(data[0].EventTime).toLocaleTimeString() : 'N/A';
 
     const cards = [
         { title: 'Total Entries', value: totalEntries, icon: Activity, color: 'text-accent' },
         { title: 'Security Alerts', value: deniedCount, icon: ShieldAlert, color: 'text-danger' },
-        { title: 'Active Locations', value: uniqueLocations, icon: MapPin, color: 'text-warning' },
+        { title: 'Registered Employees', value: employeeCount, icon: User, color: 'text-warning' },
         { title: 'Last Activity', value: lastActive, icon: ShieldCheck, color: 'text-success' },
     ];
 

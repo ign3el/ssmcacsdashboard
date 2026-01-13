@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Download, CheckSquare, Square, Filter, Plus, X, ArrowUp, ArrowDown, AlertCircle, FileSpreadsheet, FileIcon } from 'lucide-react';
 import { format, subDays, isAfter, isBefore } from 'date-fns';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
 const ReportGenerator = ({ data }) => {
@@ -11,6 +11,7 @@ const ReportGenerator = ({ data }) => {
         CardNumber: true,
         DoorName: true,
         Location: true,
+        Department: true,
         EventType: true,
         AccessGranted: true
     });
@@ -33,6 +34,7 @@ const ReportGenerator = ({ data }) => {
         { key: 'CardNumber', label: 'Card #' },
         { key: 'DoorName', label: 'Door' },
         { key: 'Location', label: 'Location' },
+        { key: 'Department', label: 'Department' },
         { key: 'EventType', label: 'Event Type' },
         { key: 'AccessGranted', label: 'Status' }
     ];
