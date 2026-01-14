@@ -50,7 +50,7 @@ const TransitTable = ({ data }) => {
             <div className="glass-panel rounded-2xl border border-white/5 flex-1 min-h-0 overflow-hidden flex flex-col">
                 <div className="overflow-auto custom-scrollbar flex-1">
                     <table className="w-full relative border-collapse">
-                        <thead className="sticky top-0 z-10 bg-[#0f172a]">
+                        <thead className="sticky top-0 z-20 bg-[#0f172a] shadow-lg">
                             <tr className="border-b border-white/5">
                                 {[
                                     { label: 'Time', key: 'EventTime' },

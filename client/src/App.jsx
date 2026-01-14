@@ -95,15 +95,24 @@ function App() {
       }
 
       const response = await fetch(`/api/transit?${params.toString()}`);
-      const result = await response.json();
-      // Ensure result is always an array
-      setData(Array.isArray(result) ? result : []);
+      if (!response.ok) {
+        console.warn('Transit API returned error:', response.status);
+        setData([]);
+      } else {
+        const result = await response.json();
+        setData(Array.isArray(result) ? result : []);
+      }
 
       // Fetch Employees for Stats
       const empResponse = await fetch('/api/employees');
-      const empResult = await empResponse.json();
-      setEmployeeData(Array.isArray(empResult) ? empResult : []);
-      setEmployeeData(Array.isArray(empResult) ? empResult : []);
+      if (!empResponse.ok) {
+        console.warn('Employees API returned error:', empResponse.status);
+        setEmployeeData([]);
+      } else {
+        const empResult = await empResponse.json();
+        setEmployeeData(Array.isArray(empResult) ? empResult : []);
+      }
+
       setConnectionError(false); // Clear error on success
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -185,22 +194,12 @@ function App() {
           </div>
 
           <div className="flex items-center gap-6">
-
             <div className="h-8 w-[1px] bg-white/10"></div>
-
             <div className="flex items-center gap-4">
-              <button className="relative p-2 text-slate-400 hover:text-white transition-colors hover:bg-white/5 rounded-lg">
-                <Bell size={20} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#020b1c]"></span>
-              </button>
-              <div className="flex items-center gap-3 pl-4 border-l border-white/10">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs ring-2 ring-white/10">
-                  {currentUser ? currentUser.substring(0, 2).toUpperCase() : 'DB'}
-                </div>
-                <div className="hidden lg:block">
-                  <p className="text-sm font-medium text-white">{currentUser}</p>
-                  <p className="text-xs text-slate-500">Database User</p>
-                </div>
+              <img src="/honeywell-logo.png" alt="Honeywell" className="h-12 object-contain" />
+              <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+                <User size={18} className="text-emerald-400" />
+                <span className="text-sm font-medium text-white">{currentUser}</span>
               </div>
             </div>
           </div>
@@ -339,48 +338,55 @@ function App() {
                 </div>
               </div>
             </div>
-          )}
+          )
+          }
 
-          {currentView === 'reports' && (
-            <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-3xl font-bold text-white mb-1">Report Generator</h1>
-                  <p className="text-slate-500">Create, customize, and export detailed access reports.</p>
-                </div>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search size={16} className="text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+          {
+            currentView === 'reports' && (
+              <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-3xl font-bold text-white mb-1">Report Generator</h1>
+                    <p className="text-slate-500">Create, customize, and export detailed access reports.</p>
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Search events, names, doors, status..."
-                    className="bg-[#0f172a]/50 border border-white/5 rounded-xl pl-10 pr-4 py-2 text-sm w-64 focus:w-80 transition-all outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search size={16} className="text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search events, names, doors, status..."
+                      className="bg-[#0f172a]/50 border border-white/5 rounded-xl pl-10 pr-4 py-2 text-sm w-64 focus:w-80 transition-all outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
                 </div>
+                {/* Pass the SERVER-FILTERED data to the report generator */}
+                <ReportGenerator data={filteredData} />
               </div>
-              {/* Pass the SERVER-FILTERED data to the report generator */}
-              <ReportGenerator data={filteredData} />
-            </div>
-          )}
+            )
+          }
 
-          {currentView === 'cardholders' && (
-            <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
-              <CardholderPage />
-            </div>
-          )}
+          {
+            currentView === 'cardholders' && (
+              <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
+                <CardholderPage />
+              </div>
+            )
+          }
 
-          {currentView === 'settings' && (
-            <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
-              <SettingsPage />
-            </div>
-          )}
+          {
+            currentView === 'settings' && (
+              <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
+                <SettingsPage />
+              </div>
+            )
+          }
 
-        </main>
-      </div>
-    </div>
+        </main >
+      </div >
+    </div >
   );
 }
 

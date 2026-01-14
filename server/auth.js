@@ -104,10 +104,18 @@ const deleteUser = async (username) => {
     return info.changes > 0;
 }
 
+const modifyUser = async (username, newUsername, newRole) => {
+    await init();
+    const stmt = db.prepare('UPDATE users SET username = ?, role = ? WHERE username = ?');
+    stmt.run(newUsername, newRole, username);
+    return { username: newUsername, role: newRole };
+};
+
 module.exports = {
     authenticate,
     createUser,
     resetPassword,
     listUsers,
-    deleteUser
+    deleteUser,
+    modifyUser
 };

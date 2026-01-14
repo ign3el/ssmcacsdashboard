@@ -3,16 +3,19 @@ const cors = require('cors');
 const path = require('path');
 const db = require('./db');
 const auth = require('./auth');
+const mssqlAuth = require('./mssqlAuth');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.set('etag', false); // Disable ETags globally to prevent 304 responses
 
 // Debugging
 console.log('Initializing Routes...');
 
 // API: Settings (Moved to top for priority)
 app.get('/api/settings', (req, res) => {
+    res.set('Cache-Control', 'no-store');
     console.log('GET /api/settings hit');
     try {
         const config = db.getCurrentConfig();
@@ -105,8 +108,9 @@ app.post('/api/deploy-views', async (req, res) => {
 
 // List Users
 app.get('/api/users', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
-        const users = auth.listUsers();
+        const users = await auth.listUsers();
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -116,7 +120,18 @@ app.get('/api/users', async (req, res) => {
 // Create User
 app.post('/api/users', async (req, res) => {
     try {
-        const { username, password, role } = req.body;
+        const { username, password, role, dashboardPassword } = req.body;
+
+        // Verify dashboard credentials
+        if (!dashboardPassword) {
+            return res.status(400).json({ error: 'Dashboard password is required' });
+        }
+
+        const isValid = await mssqlAuth.verifyDashboardUser(dashboardPassword);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Invalid dashboard credentials' });
+        }
+
         const newUser = await auth.createUser(username, password, role);
         res.json(newUser);
     } catch (err) {
@@ -128,8 +143,18 @@ app.post('/api/users', async (req, res) => {
 app.put('/api/users/:username/reset-password', async (req, res) => {
     try {
         const { username } = req.params;
-        const { password } = req.body;
+        const { password, dashboardPassword } = req.body;
         if (!password) return res.status(400).json({ error: 'Password is required' });
+
+        // Verify dashboard credentials
+        if (!dashboardPassword) {
+            return res.status(400).json({ error: 'Dashboard password is required' });
+        }
+
+        const isValid = await mssqlAuth.verifyDashboardUser(dashboardPassword);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Invalid dashboard credentials' });
+        }
 
         await auth.resetPassword(username, password);
         res.json({ success: true, message: 'Password updated successfully' });
@@ -142,6 +167,18 @@ app.put('/api/users/:username/reset-password', async (req, res) => {
 app.delete('/api/users/:username', async (req, res) => {
     try {
         const { username } = req.params;
+        const { dashboardPassword } = req.body;
+
+        // Verify dashboard credentials
+        if (!dashboardPassword) {
+            return res.status(400).json({ error: 'Dashboard password is required' });
+        }
+
+        const isValid = await mssqlAuth.verifyDashboardUser(dashboardPassword);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Invalid dashboard credentials' });
+        }
+
         await auth.deleteUser(username);
         res.json({ success: true, message: 'User deleted' });
     } catch (err) {
@@ -180,20 +217,72 @@ app.post('/api/auth/recovery', async (req, res) => {
 });
 
 // Reset Password (Internal User Management)
-app.post('/api/users/reset', async (req, res) => {
+// Reset Password (Internal User Management)
+app.put('/api/users/:username/reset-password', async (req, res) => {
     try {
-        const { username, newPassword } = req.body;
-        await auth.resetPassword(username, newPassword);
-        res.json({ success: true });
+        const { username } = req.params;
+        const { password, dashboardPassword } = req.body;
+
+        // Verify dashboard credentials
+        if (!dashboardPassword) {
+            return res.status(400).json({ error: 'Dashboard password is required' });
+        }
+
+        const isValid = await mssqlAuth.verifyDashboardUser(dashboardPassword);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Invalid dashboard credentials' });
+        }
+
+        await auth.resetPassword(username, password); // Note: auth.resetPassword expects (username, password)
+        res.json({ success: true, message: 'Password reset successfully' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+
+// Modify User
+app.put('/api/users/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const { newUsername, newRole, dashboardPassword } = req.body;
+
+        // Verify dashboard credentials
+        if (!dashboardPassword) {
+            return res.status(400).json({ error: 'Dashboard password is required' });
+        }
+
+        const isValid = await mssqlAuth.verifyDashboardUser(dashboardPassword);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Invalid dashboard credentials' });
+        }
+
+        const updatedUser = await auth.modifyUser(username, newUsername, newRole);
+        res.json(updatedUser);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
 // Delete User
-app.delete('/api/users/:username', (req, res) => {
+// Delete User
+app.delete('/api/users/:username', async (req, res) => {
     try {
         const { username } = req.params;
+        const { dashboardPassword } = req.body; // DELETE requests can have body, or use query param? 
+        // Express/HTTP allows body in DELETE, but some clients strip it. FETCH supports it.
+        // Frontend sends body in DELETE.
+
+        // Verify dashboard credentials
+        if (!dashboardPassword) {
+            return res.status(400).json({ error: 'Dashboard password is required' });
+        }
+
+        const isValid = await mssqlAuth.verifyDashboardUser(dashboardPassword);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Invalid dashboard credentials' });
+        }
+
         const success = auth.deleteUser(username);
         if (success) res.json({ success: true });
         else res.status(404).json({ error: 'User not found' });
@@ -210,6 +299,7 @@ const formatDate = (d) => new Date(d).toISOString();
 
 // GET /api/transit - Fetch transit logs
 app.get('/api/transit', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
         const { search, limit = 1000, start, end } = req.query;
         const params = {};
@@ -271,6 +361,7 @@ app.get('/api/transit', async (req, res) => {
 
 // GET /api/employees - Fetch all employee details
 app.get('/api/employees', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
         const query = `
             SELECT 
@@ -298,6 +389,7 @@ app.get('/api/employees', async (req, res) => {
 
 // Get all cardholders with their cards and behaviors
 app.get('/api/cardholders', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
         const query = `
             SELECT * FROM v_CardholderDetails
@@ -313,6 +405,7 @@ app.get('/api/cardholders', async (req, res) => {
 
 // Get doors for a specific behavior
 app.get('/api/behaviors/:behaviorId/doors', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
         const { behaviorId } = req.params;
         const query = `
@@ -326,6 +419,9 @@ app.get('/api/behaviors/:behaviorId/doors', async (req, res) => {
         res.status(500).json({ error: 'Database error' });
     }
 });
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'public')));
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.

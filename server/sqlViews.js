@@ -1,14 +1,11 @@
-// SQL View Definitions for ACS Dashboard Deployment
-// Used for automatic deployment via the Settings page
-
 const transitLogView = `
 IF OBJECT_ID('dbo.v_TransitLog', 'V') IS NOT NULL
     DROP VIEW dbo.v_TransitLog;
-
+    
 CREATE VIEW dbo.v_TransitLog AS
 SELECT
     t.TRANSIT_DATE AS EventTime,
-    ISNULL(t.Name, 'Unknown') + ' ' + ISNULL(t.Surname, '') AS CardholderName,
+    ISNULL(t.NAME, 'Unknown') + ' ' + ISNULL(t.SURNAME, '') AS CardholderName,
     t.TERMINAL AS DoorName,
     ISNULL(d.DESCRIPTION, t.TERMINAL) AS DoorDescription,
     t.TERMINAL AS Location,
@@ -17,10 +14,8 @@ SELECT
     t.SBI_ID,
     CASE WHEN t.TRANSIT_STATUS = 0 THEN 1 ELSE 0 END AS AccessGranted
 FROM dbo.HA_TRANSIT t WITH (NOLOCK)
-LEFT JOIN dbo.MG_TYPE_TRANSIT_STATUS s WITH (NOLOCK) 
-    ON t.TRANSIT_STATUS = s.ID_TYPE_TRANSIT_STATUS
-LEFT JOIN dbo.AC_VTERMINAL d WITH (NOLOCK)
-    ON t.TERMINAL = d.VTERMINAL_KEY;
+LEFT JOIN dbo.MG_TYPE_TRANSIT_STATUS s WITH (NOLOCK) ON t.TRANSIT_STATUS = s.ID_TYPE_TRANSIT_STATUS
+LEFT JOIN dbo.AC_VTERMINAL d WITH (NOLOCK) ON t.TERMINAL = d.VTERMINAL_KEY;
 `;
 
 const behaviorDoorsView = `
@@ -40,16 +35,13 @@ LEFT JOIN dbo.AC_VTERMINAL v WITH (NOLOCK) ON bt.TERMINAL_KEY = v.VTERMINAL_KEY
 WHERE bt.BEHAVIOR_ID IS NOT NULL;
 `;
 
-// CRITICAL: This view must return CardsJSON for the frontend parser
 const cardholderView = `
 IF OBJECT_ID('dbo.v_CardholderDetails', 'V') IS NOT NULL
     DROP VIEW dbo.v_CardholderDetails;
 
 CREATE VIEW dbo.v_CardholderDetails AS
 WITH LastTransit AS (
-    SELECT 
-        SBI_ID,
-        MAX(TRANSIT_DATE) AS LastAccessTime
+    SELECT SBI_ID, MAX(TRANSIT_DATE) AS LastAccessTime
     FROM dbo.HA_TRANSIT WITH (NOLOCK)
     GROUP BY SBI_ID
 ),
@@ -85,20 +77,14 @@ SELECT
             c2.StateID,
             CASE WHEN c2.StateID = 0 THEN 'Active' ELSE 'Inactive' END as StatusText,
             (SELECT MAX(t.TRANSIT_DATE) FROM dbo.HA_TRANSIT t WITH (NOLOCK) WHERE t.CARD_NUMBER = c2.CardNumber) as LastUsedDate,
-            (
-                SELECT TOP 1 v2.DESCRIPTION 
-                FROM dbo.HA_TRANSIT t2 WITH (NOLOCK)
-                LEFT JOIN dbo.AC_VTERMINAL v2 WITH (NOLOCK) ON t2.TERMINAL = v2.VTERMINAL_KEY
-                WHERE t2.CARD_NUMBER = c2.CardNumber 
-                ORDER BY t2.TRANSIT_DATE DESC
-            ) as LastDoorName
+            (SELECT TOP 1 v2.DESCRIPTION FROM dbo.HA_TRANSIT t2 WITH (NOLOCK) LEFT JOIN dbo.AC_VTERMINAL v2 WITH (NOLOCK) ON t2.TERMINAL = v2.VTERMINAL_KEY WHERE t2.CARD_NUMBER = c2.CardNumber ORDER BY t2.TRANSIT_DATE DESC) as LastDoorName
         FROM dbo.Card c2 WITH (NOLOCK)
         WHERE c2.SbiID = e.SbiID
         FOR JSON PATH
     ) AS CardsJSON,
     0 AS Site,
-    '' AS Telephone,
-    '' AS EMail,
+    e.Telephone,
+    e.EMail,
     bi.BehaviorDescriptions,
     bi.BehaviorIds,
     ld.LastDoorUsed,

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Download, CheckSquare, Square, Filter, Plus, X, ArrowUp, ArrowDown, AlertCircle, FileSpreadsheet, FileIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { format, subDays, isAfter, isBefore } from 'date-fns';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const ReportGenerator = () => {
     const [data, setData] = useState([]);
@@ -239,15 +239,23 @@ const ReportGenerator = () => {
             tableRows.push(rowData);
         });
 
-        doc.autoTable({
+        // Add header with logos and title
+        doc.setFontSize(16);
+        doc.setTextColor(41, 128, 185);
+        doc.text('SSMC Access Control Report', 14, 15);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Powered by Honeywell', 14, 22);
+
+        autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
-            startY: 20,
+            startY: 28,
             styles: { fontSize: 8 },
             headStyles: { fillColor: [41, 128, 185] }
         });
 
-        doc.text(`SSMC Access Report`, 14, 15);
         doc.save(`SSMC_Report_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`);
     };
 
@@ -290,7 +298,7 @@ const ReportGenerator = () => {
                                     <select
                                         value={dateRange}
                                         onChange={(e) => setDateRange(e.target.value)}
-                                        className="bg-[#0f172a]/50 text-sm text-slate-300 border border-white/10 rounded-lg px-3 py-2 w-full outline-none"
+                                        className="bg-[#0f172a] text-sm text-slate-300 border border-white/10 rounded-lg px-3 py-2 w-full outline-none focus:border-blue-500/50"
                                     >
                                         <option value="24h">Last 24 Hours</option>
                                         <option value="7days">Last 7 Days</option>
@@ -302,6 +310,16 @@ const ReportGenerator = () => {
                                         <div className="flex flex-col gap-2">
                                             <input type="datetime-local" className="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-slate-300" value={customStart} onChange={e => setCustomStart(e.target.value)} />
                                             <input type="datetime-local" className="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-slate-300" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+                                            <button
+                                                onClick={() => {
+                                                    const now = new Date();
+                                                    const formatted = now.toISOString().slice(0, 16);
+                                                    setCustomEnd(formatted);
+                                                }}
+                                                className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded px-2 py-1 text-xs font-medium transition-colors"
+                                            >
+                                                NOW
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -436,7 +454,7 @@ const ReportGenerator = () => {
                         </div>
                         <div className="overflow-x-auto max-h-[500px] custom-scrollbar">
                             <table className="w-full">
-                                <thead className="bg-white/5 sticky top-0 backdrop-blur-md">
+                                <thead className="bg-[#0f172a] sticky top-0 z-20 shadow-lg">
                                     <tr>
                                         {columns.map(col => selectedColumns[col.key] && (
                                             <th key={col.key} className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
