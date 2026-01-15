@@ -1,4 +1,4 @@
-﻿{
-    "currentAgent":  null,
-    "status":  "pending"
+{
+    "status":  "complete",
+    "agent":  "TestValidator"
 }
