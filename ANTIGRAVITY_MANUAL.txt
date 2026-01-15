@@ -1,6 +1,37 @@
-﻿
-ANTIGRAVITY V18.2 (GLOBAL BRAIN)
-1. Single-Pass Workflow: SME -> Debug -> Arch -> Coder -> SME.
-2. Knowledge Base & Memory are GLOBAL (C:\Users\sahte\.gemini).
-3. All projects share the same 'Brain'.
+﻿# ANTIGRAVITY V21.1 SOLO-DEV MANUAL
 
+## QUICK START
+1. Navigate to project: `cd YourProject`
+2. Initialize: `Start-Antigravity`
+3. Solve: `solve "your task description"`
+
+## NATURAL LANGUAGE COMMANDS
+- `solve "fix the UI layout"` → Routes to frontend agents
+- `solve "debug API error"` → Routes to backend agents
+- `solve "refactor code"` → Routes to architecture agents
+
+## AGENT TYPES
+**Main Agents (21):** Coder, Architect, Debug, QA, Analytics, etc.
+**SME Agents (5):** FormatChecker, TestValidator, DependencyGuard, SecurityBasic, Remediator
+
+## LAW ENFORCEMENT
+- Validator runs after EVERY agent
+- Remediator auto-fixes violations
+- Execution BLOCKS on validation failure
+- All output must follow V19 visual standards
+
+## VISUAL STANDARDS
+- Use `[INFO/TASK]` headers
+- Emoji checklists: `- ✅ Item`
+- Vertical format (no inline lists)
+- Bold headers with emojis
+
+## PORTABLE BRAIN
+- Global KB: `~/.gemini/KnowledgeBase.json`
+- Project backup: `./portable_brain/KnowledgeBase.json`
+- Auto-hydrates on new machines
+
+## TROUBLESHOOTING
+- Restart PowerShell if `solve` not found
+- Check `state/execution.json` for project status
+- View `ANTIGRAVITY_TRANSCRIPT.log` for history

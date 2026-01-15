@@ -7,6 +7,7 @@ import TransitTable from './components/TransitTable';
 import ReportGenerator from './components/ReportGenerator';
 import CardholderPage from './components/CardholderPage';
 import SettingsPage from './components/SettingsPage';
+import AnalyticsPage from './components/AnalyticsPage';
 
 import LoginPage from './components/LoginPage';
 
@@ -32,7 +33,7 @@ function useInterval(callback, delay) {
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState('');
-  const [currentView, setCurrentView] = useState('dashboard');
+  const [currentView, setCurrentView] = useState('analytics');
   const [data, setData] = useState([]);
   const [employeeData, setEmployeeData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -186,10 +187,11 @@ function App() {
             <img src="/logo-header.png" alt="SSMC" className="h-12 object-contain" />
             <div className="h-8 w-[1px] bg-white/10"></div>
             <h2 className="text-xl font-bold text-white tracking-wide">
-              {currentView === 'dashboard' ? 'Security Dashboard' :
-                currentView === 'reports' ? 'Report Generator' :
-                  currentView === 'cardholders' ? 'Cardholder Management' :
-                    'System Settings'}
+              {currentView === 'analytics' ? 'Analytics Dashboard' :
+                currentView === 'dashboard' ? 'Transit Logs' :
+                  currentView === 'reports' ? 'Report Generator' :
+                    currentView === 'cardholders' ? 'Cardholder Management' :
+                      'System Settings'}
             </h2>
           </div>
 
@@ -372,6 +374,14 @@ function App() {
             currentView === 'cardholders' && (
               <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
                 <CardholderPage />
+              </div>
+            )
+          }
+
+          {
+            currentView === 'analytics' && (
+              <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
+                <AnalyticsPage />
               </div>
             )
           }

@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity V21.1 Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e0e0e0; padding: 20px; min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header {
+            text-align: center; margin-bottom: 40px; padding: 30px;
+            background: rgba(255, 255, 255, 0.05); border-radius: 15px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        h1 {
+            font-size: 2.5em; margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .subtitle { color: #a0a0a0; font-size: 1.1em; }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; margin-bottom: 40px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 15px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); }
+        .stat-label {
+            font-size: 0.9em; color: #a0a0a0; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .stat-value {
+            font-size: 2.5em; font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .chart-container, .table-container {
+            background: rgba(255, 255, 255, 0.05); padding: 30px; border-radius: 15px;
+            margin-bottom: 30px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .chart-title { font-size: 1.5em; margin-bottom: 20px; color: #e0e0e0; }
+        .refresh-info { text-align: center; color: #a0a0a0; margin-top: 20px; font-size: 0.9em; }
+        .success-rate { color: #4ade80; }
+        .failure-rate { color: #f87171; }
+        .last-updated { text-align: center; color: #a0a0a0; margin-top: 10px; font-style: italic; }
+        .reload-btn {
+            display: block; margin: 20px auto; padding: 12px 30px; font-size: 1em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 8px; cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .reload-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        thead { background: rgba(102, 126, 234, 0.2); }
+        th {
+            padding: 15px; text-align: left; font-weight: 600; color: #e0e0e0;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.5);
+        }
+        td { padding: 12px 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: #c0c0c0; }
+        tr:hover { background: rgba(255, 255, 255, 0.05); }
+        .status-badge {
+            padding: 4px 12px; border-radius: 12px; font-size: 0.85em;
+            font-weight: 600; display: inline-block;
+        }
+        .status-failed { background: rgba(248, 113, 113, 0.2); color: #f87171; border: 1px solid #f87171; }
+        .status-remediated { background: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid #4ade80; }
+        .status-terminated { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid #fbbf24; }
+        .error-details {
+            font-family: 'Courier New', monospace; font-size: 0.85em; color: #f87171;
+            max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .no-failures { text-align: center; padding: 40px; color: #4ade80; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎛 Antigravity V21.1 Analytics</h1>
+            <p class="subtitle" id="projectName">Loading project...</p>
+            <p class="subtitle">Real-Time Execution Monitoring & Performance Metrics</p>
+            <p class="last-updated" id="lastUpdated">Loading...</p>
+        </header>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Total Tasks</div><div class="stat-value" id="totalTasks">0</div></div>
+            <div class="stat-card"><div class="stat-label">Validation Passes</div><div class="stat-value success-rate" id="validationPasses">0</div></div>
+            <div class="stat-card"><div class="stat-label">Validation Failures</div><div class="stat-value failure-rate" id="validationFailures">0</div></div>
+            <div class="stat-card"><div class="stat-label">Success Rate</div><div class="stat-value" id="successRate">0%</div></div>
+        </div>
+        <div class="chart-container"><h2 class="chart-title">📊 Validation Performance</h2><canvas id="validationChart"></canvas></div>
+        <div class="chart-container"><h2 class="chart-title">🤖 Agent Execution Counts</h2><canvas id="agentChart"></canvas></div>
+        <div class="table-container">
+            <h2 class="chart-title">🚨 Failure Tracking Log</h2>
+            <div id="failureTableContent"></div>
+        </div>
+        <button class="reload-btn" onclick="location.reload()">🔄 Reload Data</button>
+        <div class="refresh-info">Click "Reload Data" to refresh | Data source: execution_stats.json</div>
+    </div>
+    <script id="statsData" type="application/json">
+    {"projectName":"Unknown Project","totalTasks":0,"validationPasses":0,"validationFailures":0,"agentExecutions":{},"failureLog":[],"lastUpdated":"Never"}
+    </script>
+    <script>
+        let validationChart, agentChart;
+        function initCharts() {
+            const chartOptions = {
+                responsive: true, maintainAspectRatio: true,
+                plugins: { legend: { labels: { color: '#e0e0e0', font: { size: 14 } } } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#a0a0a0' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    x: { ticks: { color: '#a0a0a0' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                }
+            };
+            const validationCtx = document.getElementById('validationChart').getContext('2d');
+            validationChart = new Chart(validationCtx, {
+                type: 'bar', data: {
+                    labels: ['Passes', 'Failures'],
+                    datasets: [{
+                        label: 'Validation Results', data: [0, 0],
+                        backgroundColor: ['rgba(74, 222, 128, 0.6)', 'rgba(248, 113, 113, 0.6)'],
+                        borderColor: ['rgba(74, 222, 128, 1)', 'rgba(248, 113, 113, 1)'], borderWidth: 2
+                    }]
+                }, options: chartOptions
+            });
+            const agentCtx = document.getElementById('agentChart').getContext('2d');
+            agentChart = new Chart(agentCtx, {
+                type: 'bar', data: {
+                    labels: [], datasets: [{
+                        label: 'Executions', data: [],
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: 'rgba(102, 126, 234, 1)', borderWidth: 2
+                    }]
+                }, options: chartOptions
+            });
+        }
+        function loadFailureTable(failureLog) {
+            const container = document.getElementById('failureTableContent');
+            if (!failureLog || failureLog.length === 0) {
+                container.innerHTML = '<div class="no-failures">✅ No validation failures recorded</div>';
+                return;
+            }
+            let tableHTML = '<table><thead><tr><th>Timestamp</th><th>Agent</th><th>Task</th><th>Error Details</th><th>Status</th><th>Resolution</th></tr></thead><tbody>';
+            failureLog.forEach(failure => {
+                const statusClass = failure.status === 'remediated' ? 'status-remediated' : 
+                                  failure.status === 'terminated' ? 'status-terminated' : 'status-failed';
+                const statusText = failure.status.charAt(0).toUpperCase() + failure.status.slice(1);
+                tableHTML += `<tr><td>${failure.timestamp}</td><td><strong>${failure.agent}</strong></td><td>${failure.task}</td><td class="error-details" title="${failure.error}">${failure.error}</td><td><span class="status-badge ${statusClass}">${statusText}</span></td><td>${failure.resolution}</td></tr>`;
+            });
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+        function loadData() {
+            try {
+                const statsElement = document.getElementById('statsData');
+                const data = JSON.parse(statsElement.textContent);
+                const projectName = data.projectName || 'Unknown Project';
+                document.getElementById('projectName').textContent = '📁 Project: ' + projectName;
+                document.getElementById('totalTasks').textContent = data.totalTasks || 0;
+                document.getElementById('validationPasses').textContent = data.validationPasses || 0;
+                document.getElementById('validationFailures').textContent = data.validationFailures || 0;
+                const total = (data.validationPasses || 0) + (data.validationFailures || 0);
+                const successRate = total > 0 ? ((data.validationPasses / total) * 100).toFixed(1) : 0;
+                document.getElementById('successRate').textContent = successRate + '%';
+                document.getElementById('lastUpdated').textContent = 'Last Updated: ' + (data.lastUpdated || 'Never');
+                validationChart.data.datasets[0].data = [data.validationPasses || 0, data.validationFailures || 0];
+                validationChart.update();
+                const agentExecutions = data.agentExecutions || {};
+                agentChart.data.labels = Object.keys(agentExecutions);
+                agentChart.data.datasets[0].data = Object.values(agentExecutions);
+                agentChart.update();
+                loadFailureTable(data.failureLog || []);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('lastUpdated').textContent = 'Error: Could not parse stats data';
+            }
+        }
+        window.addEventListener('load', () => { initCharts(); loadData(); });
+    </script>
+</body>
+</html>

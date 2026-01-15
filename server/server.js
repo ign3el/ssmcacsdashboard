@@ -4,6 +4,7 @@ const path = require('path');
 const db = require('./db');
 const auth = require('./auth');
 const mssqlAuth = require('./mssqlAuth');
+const analytics = require('./analytics');
 const app = express();
 
 app.use(cors());
@@ -288,6 +289,166 @@ app.delete('/api/users/:username', async (req, res) => {
         else res.status(404).json({ error: 'User not found' });
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+// --- ANALYTICS ROUTES ---
+
+// Access Patterns & Security Analytics
+app.get('/api/analytics/peak-access-times', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getPeakAccessTimes(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in peak-access-times:', err);
+        res.status(500).json({ error: 'Failed to fetch peak access times' });
+    }
+});
+
+app.get('/api/analytics/door-utilization', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getDoorUtilization(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in door-utilization:', err);
+        res.status(500).json({ error: 'Failed to fetch door utilization' });
+    }
+});
+
+app.get('/api/analytics/access-denial-trends', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getAccessDenialTrends(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in access-denial-trends:', err);
+        res.status(500).json({ error: 'Failed to fetch access denial trends' });
+    }
+});
+
+app.get('/api/analytics/unauthorized-attempts', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getUnauthorizedAttempts(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in unauthorized-attempts:', err);
+        res.status(500).json({ error: 'Failed to fetch unauthorized attempts' });
+    }
+});
+
+// Employee & Cardholder Insights
+app.get('/api/analytics/active-inactive-cardholders', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange } = req.query;
+        const result = await analytics.getActiveVsInactiveCardholders(dateRange);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in active-inactive-cardholders:', err);
+        res.status(500).json({ error: 'Failed to fetch cardholder statistics' });
+    }
+});
+
+app.get('/api/analytics/department-access', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getDepartmentAccessPatterns(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in department-access:', err);
+        res.status(500).json({ error: 'Failed to fetch department access patterns' });
+    }
+});
+
+app.get('/api/analytics/cardholder-risk-scores', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getCardholderRiskScores(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in cardholder-risk-scores:', err);
+        res.status(500).json({ error: 'Failed to fetch cardholder risk scores' });
+    }
+});
+
+// Operational Metrics
+app.get('/api/analytics/system-health', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const result = await analytics.getSystemHealthMetrics();
+        res.json(result);
+    } catch (err) {
+        console.error('Error in system-health:', err);
+        res.status(500).json({ error: 'Failed to fetch system health metrics' });
+    }
+});
+
+app.get('/api/analytics/zone-occupancy', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const result = await analytics.getZoneOccupancy();
+        res.json(result);
+    } catch (err) {
+        console.error('Error in zone-occupancy:', err);
+        res.status(500).json({ error: 'Failed to fetch zone occupancy' });
+    }
+});
+
+app.get('/api/analytics/behavior-compliance', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getBehaviorCompliance(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in behavior-compliance:', err);
+        res.status(500).json({ error: 'Failed to fetch behavior compliance' });
+    }
+});
+
+// Time-Based Analytics
+app.get('/api/analytics/after-hours-access', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getAfterHoursAccess(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in after-hours-access:', err);
+        res.status(500).json({ error: 'Failed to fetch after-hours access' });
+    }
+});
+
+app.get('/api/analytics/weekend-holiday-patterns', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getWeekendHolidayPatterns(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in weekend-holiday-patterns:', err);
+        res.status(500).json({ error: 'Failed to fetch weekend/holiday patterns' });
+    }
+});
+
+app.get('/api/analytics/response-time-metrics', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const { dateRange, startDate, endDate } = req.query;
+        const result = await analytics.getResponseTimeMetrics(dateRange, startDate, endDate);
+        res.json(result);
+    } catch (err) {
+        console.error('Error in response-time-metrics:', err);
+        res.status(500).json({ error: 'Failed to fetch response time metrics' });
     }
 });
 

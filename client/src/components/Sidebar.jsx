@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, FileText, Users, MapPin, ShieldAlert, Settings, LogOut, ChevronRight, Zap, Pin, PinOff } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, MapPin, ShieldAlert, Settings, LogOut, ChevronRight, Zap, Pin, PinOff, BarChart3 } from 'lucide-react';
 
 const Sidebar = ({ currentView, onNavigate, user, onLogout }) => {
     const [isHovered, setIsHovered] = useState(false);
@@ -9,7 +9,8 @@ const Sidebar = ({ currentView, onNavigate, user, onLogout }) => {
     const isOpen = isHovered || isPinned;
 
     const menuItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
+        { id: 'dashboard', label: 'Transit Logs', icon: LayoutDashboard },
         { id: 'reports', label: 'Reports', icon: FileText },
         { id: 'cardholders', label: 'Cardholders', icon: Users },
         { id: 'settings', label: 'Settings', icon: Settings },
