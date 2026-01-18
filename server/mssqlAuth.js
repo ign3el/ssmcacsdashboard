@@ -7,7 +7,8 @@ const { getCurrentConfig } = require('./db');
  * @param {string} password - Password to verify (not used with Windows Auth, kept for API compatibility)
  * @returns {Promise<boolean>} - True if connection is successful, false otherwise
  */
-async function verifyDashboardUser(password) {
+// eslint-disable-next-line no-unused-vars
+async function verifyDashboardUser(_password) {
     const config = getCurrentConfig();
 
     // Create a new config with Windows Authentication using Administrator

@@ -55,6 +55,7 @@ const authenticate = async (username, password) => {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return null;
 
+    // eslint-disable-next-line no-unused-vars
     const { password: _, ...userWithoutPass } = user;
     return userWithoutPass;
 };

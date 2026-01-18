@@ -1,10 +1,11 @@
 {
-  "appPort": 80,
-  "user": "acs_reader",
-  "password": "SSMC_Admin_2024!",
+  "appPort": 8080,
   "server": "172.30.178.197",
   "database": "cms",
   "port": 1433,
+  "windowsAuth": true,
   "encrypt": false,
-  "trustServerCertificate": true
+  "trustServerCertificate": true,
+  "connectionTimeout": 30000,
+  "requestTimeout": 30000
 }

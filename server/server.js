@@ -1,15 +1,51 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
 const db = require('./db');
 const auth = require('./auth');
 const mssqlAuth = require('./mssqlAuth');
 const analytics = require('./analytics');
 const app = express();
 
-app.use(cors());
+// Security: Helmet middleware for security headers
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for now to avoid breaking existing functionality
+    crossOriginEmbedderPolicy: false
+}));
+
+// Security: CORS configuration
+const corsOptions = {
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:8080'],
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.set('etag', false); // Disable ETags globally to prevent 304 responses
+
+// Security: Rate limiting for authentication endpoints
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 attempts per window
+    message: { error: 'Too many login attempts, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // 100 requests per window
+    message: { error: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// Apply general rate limiting to all API routes
+app.use('/api/', apiLimiter);
 
 // Debugging
 console.log('Initializing Routes...');
@@ -74,9 +110,18 @@ app.post('/api/settings', async (req, res) => {
 
 // --- AUTHENTICATION ROUTES ---
 
-// Login
-app.post('/api/login', async (req, res) => {
+// Login (with rate limiting and input validation)
+app.post('/api/login', loginLimiter, [
+    body('username').trim().notEmpty().withMessage('Username is required'),
+    body('password').notEmpty().withMessage('Password is required')
+], async (req, res) => {
     try {
+        // Validate input
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Invalid input', details: errors.array() });
+        }
+
         const { username, password } = req.body;
         const user = await auth.authenticate(username, password);
         if (user) {
@@ -85,27 +130,12 @@ app.post('/api/login', async (req, res) => {
             res.status(401).json({ error: 'Invalid credentials' });
         }
     } catch (err) {
-        console.error('Login error:', err);
+        console.error('Login error:', err.message);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// Deploy Views (Checks for Administrator DB User)
-app.post('/api/deploy-views', async (req, res) => {
-    try {
-        const currentConfig = db.getCurrentConfig();
-        if (currentConfig.user !== 'Administrator') {
-            return res.status(403).json({
-                error: 'Unauthorized: View deployment requires "Administrator" database user.'
-            });
-        }
-
-        const logs = await db.deployViews();
-        res.json({ success: true, logs });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// REMOVED: Duplicate route definition - already defined at line 49
 
 // List Users
 app.get('/api/users', async (req, res) => {
@@ -118,16 +148,23 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
-// Create User
-app.post('/api/users', async (req, res) => {
+// Create User (with input validation)
+app.post('/api/users', [
+    body('username').trim().isLength({ min: 3, max: 50 }).withMessage('Username must be 3-50 characters'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    body('role').optional().isIn(['user', 'admin']).withMessage('Role must be user or admin'),
+    body('dashboardPassword').notEmpty().withMessage('Dashboard password is required')
+], async (req, res) => {
     try {
+        // Validate input
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Invalid input', details: errors.array() });
+        }
+
         const { username, password, role, dashboardPassword } = req.body;
 
         // Verify dashboard credentials
-        if (!dashboardPassword) {
-            return res.status(400).json({ error: 'Dashboard password is required' });
-        }
-
         const isValid = await mssqlAuth.verifyDashboardUser(dashboardPassword);
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid dashboard credentials' });
@@ -140,18 +177,22 @@ app.post('/api/users', async (req, res) => {
     }
 });
 
-// Reset User Password (Admin function)
-app.put('/api/users/:username/reset-password', async (req, res) => {
+// Reset User Password (Admin function with validation)
+app.put('/api/users/:username/reset-password', [
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    body('dashboardPassword').notEmpty().withMessage('Dashboard password is required')
+], async (req, res) => {
     try {
-        const { username } = req.params;
-        const { password, dashboardPassword } = req.body;
-        if (!password) return res.status(400).json({ error: 'Password is required' });
-
-        // Verify dashboard credentials
-        if (!dashboardPassword) {
-            return res.status(400).json({ error: 'Dashboard password is required' });
+        // Validate input
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Invalid input', details: errors.array() });
         }
 
+        const { username } = req.params;
+        const { password, dashboardPassword } = req.body;
+
+        // Verify dashboard credentials
         const isValid = await mssqlAuth.verifyDashboardUser(dashboardPassword);
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid dashboard credentials' });
@@ -655,8 +696,7 @@ async function main() {
         console.log('---------------------------------------------------');
         console.log(`Open http://localhost:${PORT} or http://${require('os').hostname()}:${PORT}`);
         console.log('---------------------------------------------------');
-        console.log(`Connected to SQL Database`);
-        console.log('Routes Verified.');
+        console.log('---------------------------------------------------');
     });
 
     serverInstance.on('error', (e) => {

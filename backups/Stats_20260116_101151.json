@@ -1,0 +1,306 @@
+﻿{
+    "projectName":  "ACS Dashboard",
+    "validationFailures":  16,
+    "validationPasses":  38,
+    "agentExecutions":  {
+                            "FormatChecker":  10,
+                            "TestValidator":  13,
+                            "SecurityBasic":  1,
+                            "DependencyGuard":  2
+                        },
+    "lastUpdated":  "2026-01-16 09:21:31",
+    "totalTasks":  26,
+    "codeQualityFailures":  16,
+    "failureLog":  [
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "SecurityBasic",
+                           "timestamp":  "2026-01-16 08:58:59",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "i have an issue. when i try to connect to production with windows auth, it still tries to connect as acs_reader and says validation failed"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 08:59:00",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "i have an issue. when i try to connect to production with windows auth, it still tries to connect as acs_reader and says validation failed"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:06:38",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Orchestrator Wrapper Test"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:06:39",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Orchestrator Wrapper Test"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:12:52",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  ""
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:12:54",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  ""
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:12:57",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Gateway Connectivity Check 2"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:12:58",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Gateway Connectivity Check 2"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:16:39",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  ""
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:16:40",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  ""
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:16:43",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Find \u0027acs_reader\u0027 in all files"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:16:44",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Find \u0027acs_reader\u0027 in all files"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "DependencyGuard",
+                           "timestamp":  "2026-01-16 09:18:14",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Verify Windows Auth \u0026 Config Fix"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:18:15",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Verify Windows Auth \u0026 Config Fix"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "DependencyGuard",
+                           "timestamp":  "2026-01-16 09:21:29",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Verify Auth Fallback Logic"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:21:30",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Verify Auth Fallback Logic"
+                       }
+                   ],
+    "transitLog":  [
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "SecurityBasic",
+                           "timestamp":  "2026-01-16 08:58:59",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "i have an issue. when i try to connect to production with windows auth, it still tries to connect as acs_reader and says validation failed"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 08:59:00",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "i have an issue. when i try to connect to production with windows auth, it still tries to connect as acs_reader and says validation failed"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:06:38",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Orchestrator Wrapper Test"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:06:39",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Orchestrator Wrapper Test"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:12:52",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  ""
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:12:54",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  ""
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:12:57",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Gateway Connectivity Check 2"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:12:58",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Gateway Connectivity Check 2"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:16:39",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  ""
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:16:40",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  ""
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "FormatChecker",
+                           "timestamp":  "2026-01-16 09:16:43",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Find \u0027acs_reader\u0027 in all files"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:16:44",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Find \u0027acs_reader\u0027 in all files"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "DependencyGuard",
+                           "timestamp":  "2026-01-16 09:18:14",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Verify Windows Auth \u0026 Config Fix"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:18:15",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Verify Windows Auth \u0026 Config Fix"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "DependencyGuard",
+                           "timestamp":  "2026-01-16 09:21:29",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Verify Auth Fallback Logic"
+                       },
+                       {
+                           "resolution":  "Remediator fixed violation",
+                           "validator":  "{ CODE }",
+                           "agent":  "TestValidator",
+                           "timestamp":  "2026-01-16 09:21:30",
+                           "error":  "CODE QUALITY FAILURE",
+                           "status":  "remediated",
+                           "task":  "Verify Auth Fallback Logic"
+                       }
+                   ]
+}

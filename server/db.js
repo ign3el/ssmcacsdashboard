@@ -5,7 +5,10 @@ const sqlViews = require('./sqlViews');
 require('dotenv').config();
 
 // Path to external config file (for EXE mode)
-const CONFIG_PATH = path.join(process.cwd(), 'config.json');
+// FIXED: Detect if running as PKG and look in the executable's directory
+const isPkg = typeof process.pkg !== 'undefined';
+const CWD = isPkg ? path.dirname(process.execPath) : process.cwd();
+const CONFIG_PATH = path.join(CWD, 'config.json');
 
 // Default Env Config
 let currentConfig = {
@@ -29,7 +32,7 @@ function loadConfig() {
         if (fs.existsSync(CONFIG_PATH)) {
             const raw = fs.readFileSync(CONFIG_PATH, 'utf8');
             const fileConfig = JSON.parse(raw);
-            console.log('📝 Loaded configuration from config.json');
+            console.log(`📝 Loaded configuration from ${CONFIG_PATH}`);
 
             // Merge file config into currentConfig
             currentConfig = {
@@ -39,9 +42,28 @@ function loadConfig() {
                 options: {
                     ...currentConfig.options,
                     encrypt: fileConfig.encrypt === true || fileConfig.encrypt === 'true',
-                    trustServerCertificate: fileConfig.trustServerCertificate !== false
+                    trustServerCertificate: fileConfig.trustServerCertificate !== false,
+                    connectionTimeout: parseInt(fileConfig.connectionTimeout) || 30000,
+                    requestTimeout: parseInt(fileConfig.requestTimeout) || 30000
                 }
             };
+
+            // Windows Authentication Support
+            if (fileConfig.windowsAuth) {
+                try {
+                    // Check if driver is available (it might fail to build on some Node versions)
+                    require.resolve('msnodesqlv8');
+                    console.log('🔐 Enabling Windows Authentication (Trusted Connection)');
+                    currentConfig.driver = 'msnodesqlv8';
+                    currentConfig.options.trustedConnection = true;
+                } catch (e) {
+                    console.warn('⚠️ Windows Authentication requested but "msnodesqlv8" driver failed to load.');
+                    console.error('   Error Details:', e.message);
+                    console.warn('   Falling back to standard SQL Authentication (This will fail if User/Pass are missing).');
+                }
+            }
+        } else {
+            console.log(`⚠️ Config file not found at: ${CONFIG_PATH}`);
         }
     } catch (err) {
         console.error('⚠️ Error loading config.json:', err.message);
@@ -64,6 +86,11 @@ async function connectDB() {
         loadConfig();
 
         console.log(`🔌 Connecting to SQL Server at ${currentConfig.server}...`);
+        console.log(`   > Driver: ${currentConfig.driver || 'default (tedious)'}`);
+        console.log(`   > Auth Mode: ${currentConfig.options.trustedConnection ? 'Windows Auth' : 'SQL Auth'}`);
+        if (!currentConfig.options.trustedConnection) {
+            console.log(`   > User: ${currentConfig.user}`);
+        }
 
         pool = await new sql.ConnectionPool(currentConfig).connect();
 
@@ -77,7 +104,7 @@ async function connectDB() {
 }
 
 // Initial connection attempt
-connectDB().catch(e => { }); // Suppress initial fail to allow server to start
+connectDB().catch(() => { }); // Suppress initial fail to allow server to start
 
 /**
  * Executes a query with mapped parameters.
@@ -114,25 +141,22 @@ async function executeQuery(query, params = {}) {
 
 // API to save new config
 function saveConfig(newConfig) {
-    try {
-        const configToSave = {
-            user: newConfig.user,
-            password: newConfig.password,
-            server: newConfig.server,
-            database: newConfig.database,
-            port: parseInt(newConfig.port),
-            encrypt: newConfig.encrypt,
-            trustServerCertificate: newConfig.trustServerCertificate
-        };
+    // UPDATED: Removed useless try/catch wrapper
+    const configToSave = {
+        user: newConfig.user,
+        password: newConfig.password,
+        server: newConfig.server,
+        database: newConfig.database,
+        port: parseInt(newConfig.port),
+        encrypt: newConfig.encrypt,
+        trustServerCertificate: newConfig.trustServerCertificate
+    };
 
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(configToSave, null, 2));
-        console.log('💾 Saved new configuration to config.json');
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(configToSave, null, 2));
+    console.log('💾 Saved new configuration to config.json');
 
-        // Reconnect immediately
-        return connectDB();
-    } catch (err) {
-        throw err;
-    }
+    // Reconnect immediately
+    return connectDB();
 }
 
 function getCurrentConfig() {
@@ -155,6 +179,16 @@ async function testConnection(testConfig) {
                 readOnlyIntent: true
             }
         };
+
+        if (testConfig.windowsAuth) {
+            try {
+                require.resolve('msnodesqlv8');
+                configToTest.driver = 'msnodesqlv8';
+                configToTest.options.trustedConnection = true;
+            } catch (e) {
+                console.warn('⚠️ Test Connection: msnodesqlv8 not found.');
+            }
+        }
 
         console.log(`🔌 Testing connection to ${configToTest.server}...`);
         testPool = await new sql.ConnectionPool(configToTest).connect();

@@ -1,0 +1,6 @@
+@echo off
+cd /d "%~dp0"
+echo Starting ACS Dashboard (Portable Mode)...
+echo Connecting to Database...
+".\node.exe" server.js
+pause

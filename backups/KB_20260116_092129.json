@@ -1,0 +1,253 @@
+﻿{
+    "version": "19.0",
+    "system": "Antigravity Global Brain",
+    "last_updated": "2026-01-12T00:38:10+04:00",
+    "protocol": {
+        "hq_workflow": {
+            "description": "Single-pass resolution workflow - STRICT ENFORCEMENT",
+            "route": [
+                "SME/Support → Debugger",
+                "Debugger → Architect",
+                "Architect → Coder",
+                "Coder → SME"
+            ],
+            "enforcement": "MANDATORY - no exceptions"
+        },
+        "agent_roles": {
+            "Orchestrator": {
+                "responsibilities": [
+                    "Route tasks",
+                    "Manage workflow",
+                    "Execute commands",
+                    "Global KB access"
+                ],
+                "permissions": [
+                    "Execute commands",
+                    "Full system access"
+                ],
+                "restrictions": [],
+                "tier": 1,
+                "execution_rights": true,
+                "write_rights": true
+            },
+            "Debugger": {
+                "responsibilities": [
+                    "Diagnose issues",
+                    "Execute diagnostic commands",
+                    "Isolate root cause"
+                ],
+                "permissions": [
+                    "Execute commands for diagnostics"
+                ],
+                "restrictions": [
+                    "NO file writes"
+                ],
+                "must_route_to": "Architect",
+                "tier": 1,
+                "execution_rights": true,
+                "write_rights": false
+            },
+            "QA": {
+                "responsibilities": [
+                    "Test functionality",
+                    "Validate implementations",
+                    "Execute test commands"
+                ],
+                "permissions": [
+                    "Execute test commands",
+                    "Run validation scripts"
+                ],
+                "restrictions": [
+                    "NO file writes"
+                ],
+                "tier": 1,
+                "execution_rights": true,
+                "write_rights": false
+            },
+            "Coder": {
+                "responsibilities": [
+                    "Write code",
+                    "Implement solutions",
+                    "Create/modify files"
+                ],
+                "permissions": [
+                    "File write access ONLY"
+                ],
+                "restrictions": [
+                    "CANNOT execute scripts",
+                    "CANNOT run commands"
+                ],
+                "must_route_to": "SME",
+                "tier": 2,
+                "execution_rights": false,
+                "write_rights": true
+            },
+            "Architect": {
+                "responsibilities": [
+                    "Design solutions",
+                    "Plan implementation",
+                    "Create specifications"
+                ],
+                "permissions": [
+                    "Advisory only"
+                ],
+                "restrictions": [
+                    "NO execution",
+                    "NO file writes"
+                ],
+                "must_route_to": "Coder",
+                "tier": 3,
+                "execution_rights": false,
+                "write_rights": false
+            },
+            "Support": {
+                "responsibilities": [
+                    "Analyze requests",
+                    "Provide guidance",
+                    "Route to appropriate agent"
+                ],
+                "permissions": [
+                    "Advisory only",
+                    "Bypass keystore"
+                ],
+                "restrictions": [
+                    "NO execution",
+                    "NO file writes"
+                ],
+                "must_route_to": "Debugger",
+                "tier": 3,
+                "execution_rights": false,
+                "write_rights": false
+            }
+        },
+        "execution_controls": {
+            "execution_model": {
+                "tier_1_execute": {
+                    "agents": [
+                        "Orchestrator",
+                        "Debugger",
+                        "QA"
+                    ],
+                    "permissions": "Full execution rights",
+                    "rationale": "Need live state or task execution to perform their job"
+                },
+                "tier_2_write_only": {
+                    "agents": [
+                        "Coder"
+                    ],
+                    "permissions": "File write only, NO execution",
+                    "rationale": "Implements solutions but doesn\u0027t execute arbitrary code"
+                },
+                "tier_3_advisory": {
+                    "agents": [
+                        "Support",
+                        "Architect",
+                        "Security",
+                        "Compliance",
+                        "UX",
+                        "Data",
+                        "Analytics",
+                        "Performance",
+                        "Research",
+                        "Operations",
+                        "Validator",
+                        "Optimizer",
+                        "Release",
+                        "Risk",
+                        "Documentation",
+                        "DevOps",
+                        "Integration"
+                    ],
+                    "permissions": "Advisory only, NO execution, NO file writes",
+                    "rationale": "Provide guidance and recommendations only"
+                }
+            },
+            "context_preservation": {
+                "global_context_object": "$GlobalContext",
+                "properties": {
+                    "ProjectFolder": "Current project directory",
+                    "KB": "Global Knowledge Base reference",
+                    "Memory": "Global Memory reference",
+                    "TaskStack": "Task execution stack",
+                    "LastResult": "Pipeline output preservation",
+                    "LastError": "Error capture for safe execution"
+                },
+                "transaction_logging": {
+                    "enabled": true,
+                    "pattern": "snapshot → run task → append → save"
+                }
+            },
+            "safe_execution": {
+                "wrapper_function": "Safe-Invoke",
+                "error_handling": "Capture errors in $GlobalContext.LastError",
+                "prevents": "Pipeline crashes from execution failures"
+            },
+            "handoff_protocol": {
+                "required_tags": [
+                    "[INFO/TASK]",
+                    "[INFO.TASK/OUTPUT]"
+                ],
+                "must_include": [
+                    "FROM",
+                    "TO",
+                    "TASK/RECOMMENDATION"
+                ],
+                "auto_fail_on_missing_handoff": true
+            },
+            "output_formatting": {
+                "required_format": "Bold H1 headers with emojis",
+                "checklist_emojis": [
+                    "✅",
+                    "🟡",
+                    "🔵",
+                    "❌"
+                ],
+                "checklist_rules": "Each item on separate line",
+                "no_markdown_logs": true,
+                "all_output_to_main_chat": true,
+                "tasks_in_main_chat": true
+            },
+            "background_jobs": "BLOCKED - prevents mirroring violations",
+            "transcript_logging": {
+                "required": true,
+                "global_path": "$env:USERPROFILE\\.gemini\\transcripts",
+                "fail_on_missing": true
+            }
+        },
+        "visual_status": {
+            "done": "✅",
+            "working": "🟡",
+            "pending": "🔵",
+            "failed": "❌"
+        }
+    },
+    "learnings": {
+        "android_development": {
+            "sdk_path": "C:\\Users\\sahte\\AppData\\Local\\Android\\Sdk",
+            "emulator_scripts": {
+                "start": "start_emulator.ps1",
+                "fix": "fix_emulator.ps1"
+            },
+            "avd_name": "Medium_Phone_API_36.1"
+        },
+        "emoji_encoding": {
+            "fix": "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8",
+            "applied_to": "All agent rule files and master build script"
+        },
+        "execution_model_alignment": {
+            "tier_1": "Orchestrator, Debugger, QA - Full execution",
+            "tier_2": "Coder - File write only",
+            "tier_3": "All others - Advisory only",
+            "validator_updated": true,
+            "context_preservation": "Transaction-based with GlobalContext object"
+        }
+    },
+    "notes": [
+        "Global Brain is shared across all projects",
+        "All agents must consult KnowledgeBase before executing",
+        "Protocol violations trigger auto-fail/auto-kill",
+        "HQ Workflow is MANDATORY - no exceptions",
+        "Orchestrator mediates all execution requests",
+        "Context preserved via GlobalContext and transaction logging"
+    ]
+}

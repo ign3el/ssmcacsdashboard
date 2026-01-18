@@ -77,7 +77,7 @@ async function connectDB() {
 }
 
 // Initial connection attempt
-connectDB().catch(e => { }); // Suppress initial fail to allow server to start
+connectDB().catch(() => { }); // Suppress initial fail to allow server to start
 
 /**
  * Executes a query with mapped parameters.
@@ -114,25 +114,22 @@ async function executeQuery(query, params = {}) {
 
 // API to save new config
 function saveConfig(newConfig) {
-    try {
-        const configToSave = {
-            user: newConfig.user,
-            password: newConfig.password,
-            server: newConfig.server,
-            database: newConfig.database,
-            port: parseInt(newConfig.port),
-            encrypt: newConfig.encrypt,
-            trustServerCertificate: newConfig.trustServerCertificate
-        };
+    // UPDATED: Removed useless try/catch wrapper
+    const configToSave = {
+        user: newConfig.user,
+        password: newConfig.password,
+        server: newConfig.server,
+        database: newConfig.database,
+        port: parseInt(newConfig.port),
+        encrypt: newConfig.encrypt,
+        trustServerCertificate: newConfig.trustServerCertificate
+    };
 
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(configToSave, null, 2));
-        console.log('💾 Saved new configuration to config.json');
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(configToSave, null, 2));
+    console.log('💾 Saved new configuration to config.json');
 
-        // Reconnect immediately
-        return connectDB();
-    } catch (err) {
-        throw err;
-    }
+    // Reconnect immediately
+    return connectDB();
 }
 
 function getCurrentConfig() {
